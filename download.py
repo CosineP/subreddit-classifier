@@ -266,4 +266,4 @@ if retrain:
 	log("Retraining with new dataset.")
 	for group in subreddits:
 		log("Retraining on " + group[0])
-		os.system('"C:\Program Files\Anaconda2\python.exe" learn_data.py ' + group[0])
+		os.system('"C:\Program Files\Anaconda2\python.exe" learn.py ' + group[0])

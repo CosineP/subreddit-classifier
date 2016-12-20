@@ -51,7 +51,7 @@ if post_on_match[0] == "me_irl":
 	message += "Me too thanks"
 else:
 	message += "/r/" + post_on_match[0]
-message += "[.](http://cosinegaming.com/subreddit-classifier)"
+message += "[.](https://github.com/CosineP/subreddit-classifier)"
 
 def get_time():
 	return time.strftime("%X     ", time.localtime())
