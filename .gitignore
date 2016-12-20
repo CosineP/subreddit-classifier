@@ -1,3 +1,10 @@
+# =====================
+# Project-specific
+# =====================
+*.png
+*.h5
+
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
