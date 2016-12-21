@@ -1,73 +1,75 @@
+import os
+import argparse
+from time import sleep
+
+# For testing only
+from matplotlib import pyplot
+
 import numpy
 from keras.models import Sequential
 from keras.layers import Convolution2D, MaxPooling2D, Activation, Dense, Flatten, Dropout
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import RemoteMonitor, EarlyStopping
 from keras import backend
-# from sklearn.metrics import confusion_matrix
+# from sklearn.metrics import confusion_matrix # One day. ONE DAY.
 
- # For testing only
-from matplotlib import pyplot
-from PIL import Image
 
-from sys import argv
-import os
-from time import sleep
+parser = argparse.ArgumentParser(description="Train and save a model based on the training data.")
+parser.add_argument("positive", metavar="pos", help="The subreddit to classify as >0.5.")
+parser.add_argument("negative", nargs="?", metavar="neg", default="all", help="The subreddit to classify as <0.5 (default all).")
+parser.add_argument("--epochs", "-e", type=int, default=64, help="Number of times to iterate through the entire training set.")
+parser.add_argument("--early-stopping", dest="stop", action="store_true", help="Whether or not to stop training when test loss stops decreasing.")
+parser.add_argument("--batch-size", "-b", dest="batch_size", type=int, default=32, help="Number of images to train on at a time (more memory but better training).")
+parser.add_argument("--visualize", "-v", action="store_true", help="Post results to server running hualos on localhost:9000.")
+parser.add_argument("--treat-categorical", "-c", dest="treat_categorical", action="store_true", help="Train as a categorical classification with two classes instead of binary.")
+parser.add_argument("--size", "-s", nargs=2, type=int, default=(200, 200), help="Size to resize images to in memory before training.")
+parser.add_argument("--weight", "-w", action="store", default=None, help="Automatically determine appropriate weights for unbalanced class sizes.")
+parser.add_argument("--no-save", "-n", dest="save", action="store_false", help="Do not save model (use for testing only!).")
+args = parser.parse_args()
 
-# Defaults. Command-line options specify
-project = ""
-negative_sub = "all"
-categorical_binary = False
-epochs = 64
-class_weight = None
-batch_size = 64
-test = False
-size = (200, 200)
-visualize = False
+# argc = len(argv)
+# if argc > 1:
+# 	args.positive = argv[1]
+# 	if argc > 2:
+# 		for i in range(2, argc):
+# 			if "-" in argv[i]:
+# 				if "-e" in argv[i]: # args.epochs
+# 					if argc > i + 1:
+# 						args.epochs = int(argv[i + 1])
+# 						print "Training " + str(args.epochs) + " args.epochs."
+# 					else:
+# 						print "Please specify epoch size with -e flag."
+# 				if "-s" in argv[i]: # size
+# 					if argc > i + 2:
+# 						size = (int(argv[i+1]), int(argv[i+2]))
+# 						print "Sizing images to " + str(size) + "."
+# 					else:
+# 						print "Please specify two dimensions with -s flag. Eg -s 200 200"
+# 				if "-b" in argv[i]:
+# 					if argc > i + 1:
+# 						batch_size = int(argv[i + 1])
+# 						print "Using batches of size " + batch_size + "."
+# 					else:
+# 						print "Please specify batch size with -b flag."
+# 				if "-v" in argv[i]:
+# 					visualize = True
+# 					print "Visualizing data with hualos. Make sure api.py is running!"
+# 				if "-c" in argv[i]:
+# 					args.treat_categorical = True
+# 					print "Using two categorical classes to represent binary classification."
+# 				if "-w" in argv[i]:
+# 					class_weight = "auto"
+# 					print "Automatically weighting for fair treatment of classes."
+# 				if "-t" in argv[i]:
+# 					test = True
+# 					print "Not saving weights, running a test."
+# 			else:
+# 				args.negative = argv[2]
+# else:
+# 	print 'Error: Fatal: Please specify a args.positive name (subreddit name eg "me_irl").'
+# 	exit()
 
-argc = len(argv)
-if argc > 1:
-	project = argv[1]
-	if argc > 2:
-		if "-" in argv[2]:
-			for i in range(2, argc):
-				if "-e" in argv[i]: # epochs
-					if argc > i + 1:
-						epochs = int(argv[i + 1])
-						print "Training " + str(epochs) + " epochs."
-					else:
-						print "Please specify epoch size with -e flag."
-				if "-s" in argv[i]: # size
-					if argc > i + 2:
-						size = (int(argv[i+1]), int(argv[i+2]))
-						print "Sizing images to " + str(size) + "."
-					else:
-						print "Please specify two dimensions with -s flag. Eg -s 200 200"
-				if "-b" in argv[i]:
-					if argc > i + 1:
-						batch_size = int(argv[i + 1])
-						print "Using batches of size " + batch_size + "."
-					else:
-						print "Please specify batch size with -b flag."
-				if "-v" in argv[i]:
-					visualize = True
-					print "Visualizing data with hualos. Make sure api.py is running!"
-				if "-c" in argv[i]:
-					categorical_binary = True
-					print "Using two categorical classes to represent binary classification."
-				if "-w" in argv[i]:
-					class_weight = "auto"
-					print "Automatically weighting for fair treatment of classes."
-				if "-t" in argv[i]:
-					test = True
-					print "Not saving weights, running a test."
-		else:
-			negative_sub = argv[2]
-else:
-	print 'Error: Fatal: Please specify a project name (subreddit name eg "me_irl").'
-	exit()
-
-print "Learning to classify subreddit " + project
+print "Learning to classify subreddit " + args.positive
 
 numpy.random.seed(147) # Deterministic. Number arbitrary
 backend.set_image_dim_ordering("th")
@@ -89,25 +91,25 @@ model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
 model.add(Dense(64))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
-model.add(Dense([1, 2][categorical_binary]))
-model.add(Activation(['sigmoid', 'softmax'][categorical_binary]))
+model.add(Dense([1, 2][args.treat_categorical]))
+model.add(Activation(['sigmoid', 'softmax'][args.treat_categorical]))
 
 # TODO: Try balancing data
 metrics = ["precision", "matthews_correlation"]
-model.compile(loss=['binary_crossentropy', 'categorical_crossentropy'][categorical_binary], optimizer='rmsprop', metrics=metrics)
+model.compile(loss=['binary_crossentropy', 'categorical_crossentropy'][args.treat_categorical], optimizer='rmsprop', metrics=metrics)
 
 # train_generator = 0
-# if project == "me_irl":
+# if args.positive == "me_irl":
 train_generator = ImageDataGenerator(rescale=1./255, shear_range=0.2, zoom_range=0.2)
-# elif project == "test":
+# elif args.positive == "test":
 #     train_generator = ImageDataGenerator(rescale=1./255)
 # else:
 #     train_generator = ImageDataGenerator(rescale=1./255, width_shift_range=0.2, height_shift_range=0.2, zoom_range=0.2,
 #         shear_range=0.2, rotation_range=0.2, channel_shift_range=0.2, horizontal_flip=True)
-train_generator = train_generator.flow_from_directory("", classes=[negative_sub + "\\train", project + "\\train"],
-	target_size=size, batch_size=batch_size, class_mode=["binary", "categorical"][categorical_binary])
-test_generator = ImageDataGenerator(rescale=1./255).flow_from_directory("", classes=[negative_sub + "\\test", project + "\\test"],
-	target_size=size, batch_size=batch_size, class_mode=["binary", "categorical"][categorical_binary])
+train_generator = train_generator.flow_from_directory("", classes=[args.negative + "\\train", args.positive + "\\train"],
+	target_size=args.size, batch_size=args.batch_size, class_mode=["binary", "categorical"][args.treat_categorical])
+test_generator = ImageDataGenerator(rescale=1./255).flow_from_directory("", classes=[args.negative + "\\test", args.positive + "\\test"],
+	target_size=args.size, batch_size=args.batch_size, class_mode=["binary", "categorical"][args.treat_categorical])
 
 # get_3rd_layer_output = backend.function([model.layers[0].input], [model.layers[3].output])
 # layer_output = get_3rd_layer_output([test_generator.next()[0]])[0]
@@ -115,14 +117,14 @@ test_generator = ImageDataGenerator(rescale=1./255).flow_from_directory("", clas
 # image = Image.fromarray(layer_output[0][0:3].transpose())
 # image.save("test.png")
 
-callbacks = [EarlyStopping(monitor="val_loss", min_delta=0.001, patience=5, verbose=1, mode="auto")]
-if visualize:
+callbacks = [EarlyStopping(monitor="val_loss", min_delta=0.001, patience=5, mode="auto")]
+if args.visualize:
 	callbacks.append(RemoteMonitor(root="http://localhost:9000"))
 
 try:
-	model.fit_generator(train_generator, train_generator.nb_sample, epochs,
+	model.fit_generator(train_generator, train_generator.nb_sample, args.epochs,
 		validation_data=test_generator, nb_val_samples = train_generator.nb_sample/5,
-		callbacks=callbacks, class_weight=class_weight)
+		callbacks=callbacks, class_weight=args.weight)
 	print "\x07"
 except Exception, e:
 	print "Error during training:"
@@ -138,10 +140,10 @@ print model.predict([test_generator.next()[0]])
 print "Evaluating on entire test set..."
 accuracy = int(model.evaluate_generator(test_generator, test_generator.nb_sample)[1] * 100)
 
-if not test:
+if args.save:
 	folder = "models\\"
-	name = folder + project + ("-" + negative_sub) * (negative_sub != "all") + "-" + metrics[0] + "=" + str(accuracy)
-	default_name = folder + project + ("-" + negative_sub) * (negative_sub != "all")
+	name = folder + args.positive + ("-" + args.negative) * (args.negative != "all") + "-" + metrics[0] + "=" + str(accuracy)
+	default_name = folder + args.positive + ("-" + args.negative) * (args.negative != "all")
 	weight_ext = ".h5"
 	json_ext = ".json"
 	print "Saving weights in " + name
@@ -155,9 +157,9 @@ if not test:
 		num_ext = "-#" + str(i)
 		i += 1
 	if i != 2:
+		name = name + num_ext
 		print "Model with equal ability already found."
 		print "Naming " + name
-		name = name + num_ext
 	json_file = open(name + json_ext, "w")
 	json_file.write(model.to_json())
 	json_file.close()
