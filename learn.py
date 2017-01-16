@@ -3,7 +3,7 @@ import argparse
 from time import sleep
 
 # For testing only
-from matplotlib import pyplot
+#from matplotlib import pyplot
 
 import numpy
 from keras.models import Sequential
@@ -106,9 +106,9 @@ train_generator = ImageDataGenerator(rescale=1./255, shear_range=0.2, zoom_range
 # else:
 #     train_generator = ImageDataGenerator(rescale=1./255, width_shift_range=0.2, height_shift_range=0.2, zoom_range=0.2,
 #         shear_range=0.2, rotation_range=0.2, channel_shift_range=0.2, horizontal_flip=True)
-train_generator = train_generator.flow_from_directory("", classes=[args.negative + "\\train", args.positive + "\\train"],
+train_generator = train_generator.flow_from_directory("", classes=[args.negative + "/train", args.positive + "/train"],
 	target_size=args.size, batch_size=args.batch_size, class_mode=["binary", "categorical"][args.treat_categorical])
-test_generator = ImageDataGenerator(rescale=1./255).flow_from_directory("", classes=[args.negative + "\\test", args.positive + "\\test"],
+test_generator = ImageDataGenerator(rescale=1./255).flow_from_directory("", classes=[args.negative + "/test", args.positive + "/test"],
 	target_size=args.size, batch_size=args.batch_size, class_mode=["binary", "categorical"][args.treat_categorical])
 
 # get_3rd_layer_output = backend.function([model.layers[0].input], [model.layers[3].output])
@@ -117,7 +117,9 @@ test_generator = ImageDataGenerator(rescale=1./255).flow_from_directory("", clas
 # image = Image.fromarray(layer_output[0][0:3].transpose())
 # image.save("test.png")
 
-callbacks = [EarlyStopping(monitor="val_loss", min_delta=0.001, patience=5, mode="auto")]
+callbacks = []
+if args.stop:
+	callbacks.append(EarlyStopping(monitor="val_loss", min_delta=0.001, patience=5, mode="auto"))
 if args.visualize:
 	callbacks.append(RemoteMonitor(root="http://localhost:9000"))
 
@@ -141,7 +143,7 @@ print "Evaluating on entire test set..."
 accuracy = int(model.evaluate_generator(test_generator, test_generator.nb_sample)[1] * 100)
 
 if args.save:
-	folder = "models\\"
+	folder = "models/"
 	name = folder + args.positive + ("-" + args.negative) * (args.negative != "all") + "-" + metrics[0] + "=" + str(accuracy)
 	default_name = folder + args.positive + ("-" + args.negative) * (args.negative != "all")
 	weight_ext = ".h5"

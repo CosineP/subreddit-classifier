@@ -51,10 +51,10 @@ def log(text):
 			print get_time() + "(Message cannot display)"
 
 def file_location(test, group, full_file):
-	base = subreddits[group][0] + "\\" + ["train", "test"][test]
+	base = subreddits[group][0] + "/" + ["train", "test"][test]
 	if full_file == "":
 		return base
-	return base + "\\" + full_file[:-4] + save_format
+	return base + "/" + full_file[:-4] + save_format
 
 # Thank you (NOT! These suck) for the following two functions:
 # https://github.com/Rookev/Reddit-Image-Scraper
@@ -266,4 +266,4 @@ if retrain:
 	log("Retraining with new dataset.")
 	for group in subreddits:
 		log("Retraining on " + group[0])
-		os.system('"C:\Program Files\Anaconda2\python.exe" learn.py ' + group[0])
+		os.system("python learn.py " + group[0])
