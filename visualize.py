@@ -29,31 +29,31 @@ arg = parser.parse_args()
 if not arg.name:
 	arg.name = arg.positive + ("-" + arg.negative) * (arg.negative != "all")
 
-file = open("models\\" + arg.name + ".json")
+file = open("models/" + arg.name + ".json")
 model = model_from_json(file.read())
 file.close()
-model.load_weights("models\\" + arg.name + ".h5")
+model.load_weights("models/" + arg.name + ".h5")
 
 if not os.path.exists("visualize"):
 	os.mkdir("visualize")
 for folder in [arg.negative, arg.positive]:
-	if arg.overwrite and os.path.exists("visualize\\" + folder):
-		os.remove("visualize\\" + folder)
-	if not os.path.exists("visualize\\" + folder):
-		os.mkdir("visualize\\" + folder)
+	if arg.overwrite and os.path.exists("visualize/" + folder):
+		os.remove("visualize/" + folder)
+	if not os.path.exists("visualize/" + folder):
+		os.mkdir("visualize/" + folder)
 
 # Alternating positive/negative for early stopping
-file_pairs = zip(os.listdir(arg.negative + "\\test")[:arg.count/2], os.listdir(arg.positive + "\\test")[:arg.count/2])
+file_pairs = zip(os.listdir(arg.negative + "/test")[:arg.count/2], os.listdir(arg.positive + "/test")[:arg.count/2])
 for pair in file_pairs:
 	for is_positive in range(2):
 		filename = pair[is_positive]
 		class_name = [arg.negative, arg.positive][is_positive]
 		if filename[-4:] == ".png":
 			print class_name + ": " + filename
-			image = load_img(class_name + "\\test\\" + filename)
+			image = load_img(class_name + "/test/" + filename)
 			resized_image = image.resize(arg.size)
 			data = numpy.array([img_to_array(resized_image)]) / 255.
 			prediction = model.predict(data)[0][-1] > arg.threshold # Prediction. Second value if categorical
 			classified_as = [arg.negative, arg.positive][int(prediction)]
 			if not arg.false_only or classified_as != class_name:
-				image.save("visualize\\" + classified_as + "\\" + class_name + "-" + filename)
+				image.save("visualize/" + classified_as + "/" + class_name + "-" + filename)

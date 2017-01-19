@@ -59,7 +59,7 @@ backend.set_image_dim_ordering("th")
 
 print "Loading model..."
 
-name = "models\\" + name
+name = "models/" + name
 
 model = ""
 file = open(name + ".json")
@@ -82,7 +82,7 @@ loss_function = ['binary_crossentropy', 'categorical_crossentropy'][categorical_
 metrics_names = [loss_function, "precision", "recall", ["matthews_correlation", "categorical_accuracy"][categorical_binary]]
 model.compile(loss=loss_function, optimizer='rmsprop', metrics=metrics_names[1:])
 
-test_generator = ImageDataGenerator(rescale=1./255).flow_from_directory("", classes=[negative_sub + "\\test", project + "\\test"],
+test_generator = ImageDataGenerator(rescale=1./255).flow_from_directory("", classes=[negative_sub + "/test", project + "/test"],
 target_size=size, batch_size=batch_size, class_mode=["binary", "categorical"][categorical_binary])
 
 print "Evaluating on entire test set..."

@@ -1,5 +1,7 @@
 import os
 import argparse
+import re
+import random
 
 from PIL import Image
 import pyocr
@@ -25,7 +27,7 @@ if len(tools) == 0:
 tool = tools[0]
 print "Using OCR tool " + tool.get_name()
 langs = tool.get_available_languages()
-lang = langs[0]
+lang = "eng"
 print "Using langage " + lang
 
 builder = pyocr.builders.TextBuilder()
@@ -33,18 +35,27 @@ builder.tesseract_configs.extend(("-language_model_penalty_non_freq_dict_word", 
 	"-language_model_penalty_non_dict_word", "0.8"))
 print builder.tesseract_configs
 
+sample = open("sample.html", "w")
+sample.write("<!doctype html><html><body>")
+
 # Alternating positive/negative for early stopping
-file_pairs = zip(os.listdir(args.negative + "\\test")[:args.count/2], os.listdir(args.positive + "\\test")[:args.count/2])
+file_pairs = zip(random.sample(os.listdir(args.negative + "/test"), args.count/2), random.sample(os.listdir(args.positive + "/test"), args.count/2))
 for pair in file_pairs:
 	for is_positive in range(2):
 		filename = pair[is_positive]
 		class_name = [args.negative, args.positive][is_positive]
 		if filename[-4:] == ".png":
 			print class_name + ": " + filename
-			image = Image.open(class_name + "\\test\\" + filename)
+			relative_path = class_name + "/test/" + filename
+			image = Image.open(relative_path)
 			text = tool.image_to_string(image, lang=lang, builder=builder)
+			printable_text = re.sub(r'[^\x00-\x7f]',r'~', text)
 			try:
-				print text
+				print printable_text
 			except UnicodeEncodeError, e:
 				print "Unsupported character:"
 				print str(e)
+			full_path = os.path.dirname(os.path.realpath(__file__)) + "/" + class_name + "/test/" + filename
+			sample.write('<img src="' + full_path + '" /><p>' + printable_text + '</p><br /><br />')
+	
+sample.write("</body></html>")

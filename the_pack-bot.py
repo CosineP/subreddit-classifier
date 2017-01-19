@@ -36,10 +36,10 @@ browse_subreddits = [
 post_on_match = ["animewallpaper"]
 models = []
 for group in post_on_match:
-	file = open("models\\" + group + ".json")
+	file = open("models/" + group + ".json")
 	model = model_from_json(file.read())
 	file.close()
-	model.load_weights("models\\" + group + ".h5")
+	model.load_weights("models/" + group + ".h5")
 	models.append(model)
 
 confidence = .5
@@ -165,7 +165,7 @@ for scan_type in scan:
 								log("/r/" + str(sub.subreddit))
 							log(sub.title[:60])
 							log(sub.url)
-							os.system('"C:\\Program Files (x86)\\Mozilla Firefox\\firefox" ' + sub.url)
+							os.system('firefox ' + sub.url)
 							gotten += 1
 							sub_gotten += 1
 							log("---------------")
