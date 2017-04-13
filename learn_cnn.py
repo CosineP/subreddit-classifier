@@ -27,48 +27,6 @@ parser.add_argument("--weight", "-w", action="store", default=None, help="Automa
 parser.add_argument("--no-save", "-n", dest="save", action="store_false", help="Do not save model (use for testing only!).")
 args = parser.parse_args()
 
-# argc = len(argv)
-# if argc > 1:
-# 	args.positive = argv[1]
-# 	if argc > 2:
-# 		for i in range(2, argc):
-# 			if "-" in argv[i]:
-# 				if "-e" in argv[i]: # args.epochs
-# 					if argc > i + 1:
-# 						args.epochs = int(argv[i + 1])
-# 						print "Training " + str(args.epochs) + " args.epochs."
-# 					else:
-# 						print "Please specify epoch size with -e flag."
-# 				if "-s" in argv[i]: # size
-# 					if argc > i + 2:
-# 						size = (int(argv[i+1]), int(argv[i+2]))
-# 						print "Sizing images to " + str(size) + "."
-# 					else:
-# 						print "Please specify two dimensions with -s flag. Eg -s 200 200"
-# 				if "-b" in argv[i]:
-# 					if argc > i + 1:
-# 						batch_size = int(argv[i + 1])
-# 						print "Using batches of size " + batch_size + "."
-# 					else:
-# 						print "Please specify batch size with -b flag."
-# 				if "-v" in argv[i]:
-# 					visualize = True
-# 					print "Visualizing data with hualos. Make sure api.py is running!"
-# 				if "-c" in argv[i]:
-# 					args.treat_categorical = True
-# 					print "Using two categorical classes to represent binary classification."
-# 				if "-w" in argv[i]:
-# 					class_weight = "auto"
-# 					print "Automatically weighting for fair treatment of classes."
-# 				if "-t" in argv[i]:
-# 					test = True
-# 					print "Not saving weights, running a test."
-# 			else:
-# 				args.negative = argv[2]
-# else:
-# 	print 'Error: Fatal: Please specify a args.positive name (subreddit name eg "me_irl").'
-# 	exit()
-
 print "Learning to classify subreddit " + args.positive
 
 numpy.random.seed(147) # Deterministic. Number arbitrary
